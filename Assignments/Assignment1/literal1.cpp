@@ -28,6 +28,13 @@ return: void
 void stringTokenize(char []);
 
 void checkLiterals(char []);
+void valiDateLiteral(string);
+void validateOctal(string);
+void validateHex(string);
+void validateString(string);
+void validateChar(string);
+void validateFloat(string);
+void validateInt(string);
 /**
 
 func  : To trim starting spaces in a c string
@@ -129,26 +136,26 @@ void stringTokenize(char array[])
         char *tokens;
         int i=1;
         tokens = strtok (array," ");
-        printf("Tokens:  ");
+        //printf("Tokens:  ");
         while (tokens != NULL)
         {
-          printf ("%d:%s  ",i++,tokens);
+          //printf ("%d:%s  ",i++,tokens);
           tokens = strtok (NULL, " ");
         }
-        printf("\n");
+        //printf("\n");
     }
     else
     {
         char *tokens;
         int i=1;
         tokens = strtok (array,"\"");
-        printf("Tokens1:  ");
+        //printf("Tokens1:  ");
         while (tokens != NULL)
         {
-          printf ("%d:%s  ",i++,tokens);
+          //printf ("%d:%s  ",i++,tokens);
           tokens = strtok (NULL, "\"");
         }
-        printf("\n");
+        //printf("\n");
     }
 }
 
@@ -163,43 +170,62 @@ void checkLiterals(char array[])
 		int statps = 0;
 		if((strstr (array,"printf") != NULL) || (strstr (array,"scanf") != NULL))
 		{
+			//cout << "condition 1" << endl;
 			statps = 1;
 		}
-		if(array[i]>='0' && array[i]<='9')
+		if(array[i]>='0' && array[i]<='9' )
 		{
-			while((array[i] != ';' && array[i] != ' ' && 
-			     array[i] != '\n' && array[i] != ',' && 
+			//cout << "condition 2" << endl;
+			if(array[i-1] == '+' || array[i-1] == '-')
+            {
+                buffer+=array[i-1];
+            }
+			while((array[i] != ';' && array[i] != ' ' &&
+			     array[i] != '\n' && array[i] != ',' &&
 			     array[i] != '(' && array[i] != ')' &&
+			     array[i] != '{' && array[i] != '}' &&
 			     array[i] != '|' && array[i] != '&' &&
 			     array[i] != '^' && array[i] != '%')&& (i < len))
 			{
-				//buffer += array[i];	
-				printf("%c", array[i]);
+				buffer+=array[i];
+				//printf("%c", array[i]);
 				i++;
 			}
-			//printf("Buffer = %c", buffer[0]);
-			printf("\n");
+			//cout << "Buffer1 = "<< buffer << endl;
+			valiDateLiteral(buffer);
+			buffer = "";
+			//printf("\n");
 		}
 		if(array[i] == '\"' && statps != 1)
 		{
-			printf("%c", array[i++]);
+			//cout << "condition 3" << endl;
+			buffer+=array[i];
+			//printf("%c", array[i]);
+			i++;
 			while(array[i] != '\"')
 			{
 				if(array[i] == '\\' && array[i+1] == '\"')
 				{
-					printf("%c%c",array[i],array[i+1]);
+					//printf("%c%c",array[i],array[i+1]);
+					buffer+=array[i];buffer+=array[i+1];
 					i += 2;
 				}
 				else
 				{
-					printf("%c", array[i]);
+					//printf("%c", array[i]);
+					buffer+=array[i];
 					i++;
 				}
 			}
-			printf("%c\n", array[i]);
+			buffer+=array[i];
+			//printf("%c\n", array[i]);
+			//cout << "Buffer2 = " << buffer << endl;
+			valiDateLiteral(buffer);
+			buffer="";
 		}
 		if(array[i] == '\"' && statps == 1)
 		{
+			//cout << "condition 4" << endl;
 			while(array[i] != '\"')
 			{
 				if(array[i] == '\\' && array[i+1] == '\"')
@@ -214,14 +240,399 @@ void checkLiterals(char array[])
 		}
 		if(array[i] == '\'')
 		{
-			printf("%c%c%c\n",array[i],array[i+1],array[i+2]);
-			i += 3;
+			//cout << "condition 5" << endl;
+			if(array[i+1] == '\'')
+            {
+                buffer+=array[i];buffer+=array[i+1];
+                i += 2;
+                //cout << "Buffer3 = " << buffer << endl;
+                valiDateLiteral(buffer);
+                buffer="";
+            }
+			else
+            {
+                buffer+=array[i];buffer+=array[i+1];buffer+=array[i+2];
+                //printf("%c%c%c\n",array[i],array[i+1],array[i+2]);
+                i += 3;
+                //cout << "Buffer3 = " << buffer << endl;
+                valiDateLiteral(buffer);
+                buffer="";
+		    }
 		}
 		if(array[i] == '[')
 		{
+			//cout << "condition 6" << endl;
 			i++;
-			printf("%c\n",array[i++]);
+			if(array[i] == ']')
+			{}
+			else
+			{
+				buffer+=array[i];
+				//printf("%c\n",array[i]);
+				i++;
+				//cout << "Buffer4 = " << buffer << endl;
+				valiDateLiteral(buffer);
+				buffer="";
+			}
 		}
 	}
+}
 
+void valiDateLiteral(string buffer)
+{
+	int i = 0;
+	if(buffer[i] == '0' && (buffer[i+1] != 'x' && buffer[i+1] != 'X') && buffer.length() > 1)
+	{
+		//cout << "oct" << endl;
+		validateOctal(buffer);
+	}
+	else if(buffer[i] == '0' && (buffer[i+1] == 'x' || buffer[i+1] == 'X') && buffer.length() > 2)
+	{
+		//cout << "hex" << endl;
+		validateHex(buffer);
+	}
+	else if(buffer.find("\"") != -1)
+	{
+		//cout << "string" << endl;
+		validateString(buffer);
+	}
+	else if(buffer.find("\'") != -1)
+    {
+        //cout << "char" << endl;
+        validateChar(buffer);
+    }
+    else if(buffer.find(".") != -1)
+    {
+        //cout << "float" << endl;
+        validateFloat(buffer);
+    }
+    else
+    {
+        //cout << "int" << endl;
+        validateInt(buffer);
+    }
+}
+
+void validateOctal(string buffer)
+{
+    int stat = 1, i = 0, len = buffer.length();
+    if(buffer[i] != '0')
+    {
+        stat = 0;
+    }
+    else
+    {
+        for(i = 1; i < len; i++)
+        {
+            if(!(buffer[i]>='0' && buffer[i]<='7'))
+            {
+                stat = 0;
+                break;
+            }
+        }
+    }
+    if(stat)
+    {
+        cout << "Valid Octal char " << buffer << endl;
+    }
+    else
+    {
+        cout << "Invalid Octal char " << buffer << endl;
+    }
+}
+
+void validateHex(string buffer)
+{
+    int stat = 1, i = 0, len = buffer.length();
+    if(buffer[i] != '0' && (buffer[i+1] != 'x' || buffer[i+1] != 'X'))
+    {
+        stat = 0;
+    }
+    else
+    {
+        for(i = 2; i < len; i++)
+        {
+            if(!(buffer[i]>='0' && buffer[i]<='9') && !(buffer[i]>='A' && buffer[i]<='F') && !(buffer[i]>='a' && buffer[i]<='f'))
+            {
+                cout << buffer[i];
+                stat = 0;
+                break;
+            }
+        }
+    }
+    if(stat)
+    {
+        cout << "Valid Hex char " << buffer << endl;
+    }
+    else
+    {
+        cout << "Invalid Hex char " << buffer << endl;
+    }
+}
+
+void validateString(string buffer)
+{
+    cout << "Valid string " << buffer << endl;
+}
+
+void validateChar(string buffer)
+{
+    int i = 0, stat = 1;
+    if(buffer.length() > 4)
+    {
+        stat = 0;
+    }
+    if(buffer.length() == 3 && buffer[1] != '"' && buffer[1] != '\'')
+    {
+        stat = 1;
+    }
+    if(buffer.length() == 2)
+    {
+        stat = 1;
+    }
+    if(buffer.length() == 4 && buffer[1] == '\\')
+    {
+        if(buffer[2]=='r'||buffer[2]=='n'||buffer[2]=='t'||buffer[2]=='f')
+        {
+            stat = 1;
+        }
+    }
+    if(stat)
+    {
+        cout << "Valid char " << buffer << endl;
+    }
+    else
+    {
+        cout << "Invalid char " << buffer << endl;
+    }
+}
+
+void validateFloat(string buffer)
+{
+    int i, len = buffer.length(), stat = 1;
+
+    if(buffer[len-1] == 'f' || buffer[len-1] == 'F')
+    {
+        //cout << "IF1" << endl;
+        int i, k,stat = 1, len = buffer.length(), dot = 0;
+        if(buffer[0] == '+' || buffer[0] == '-')
+        {
+            k = 1;
+        }
+        else
+        {
+            k = 0;
+        }
+        for(i=k;i<len-1;i++)
+        {
+            if(!(buffer[i]>='0' && buffer[i]<='9') && buffer[i]!='.')
+            {
+                stat = 0;
+            }
+            if(buffer[i] == '.')
+            {
+                dot++;
+            }
+            if(dot > 1)
+            {
+                stat = 0;
+            }
+        }
+        if(stat)
+        {
+            cout << "Valid float " << buffer << endl;
+        }
+        else
+        {
+            cout << "Invalid float " << buffer << endl;
+        }
+    }
+    else if(buffer[len-1] == 'L' || buffer[len-1] == 'l')
+    {
+        //cout << "IF2" << endl;
+        int i, k,stat = 1, len = buffer.length(), dot = 0;
+        if(buffer[0] == '+' || buffer[0] == '-')
+        {
+            k = 1;
+        }
+        else
+        {
+            k = 0;
+        }
+        for(i=k;i<len-1;i++)
+        {
+            if(!(buffer[i]>='0' && buffer[i]<='9') && buffer[i]!='.')
+            {
+                stat = 0;
+            }
+            if(buffer[i] == '.')
+            {
+                dot++;
+            }
+            if(dot > 1)
+            {
+                stat = 0;
+            }
+        }
+        if(stat)
+        {
+            cout << "Valid float " << buffer << endl;
+        }
+        else
+        {
+            cout << "Invalid float " << buffer << endl;
+        }
+    }
+    else if((buffer[len-1] == 'L' && buffer[len-2] == 'D')||(buffer[len-1] == 'l' && buffer[len-2] == 'd'))
+    {
+        //cout << "IF3" << endl;
+        int i, k,stat = 1, len = buffer.length(), dot = 0;
+        if(buffer[0] == '+' || buffer[0] == '-')
+        {
+            k = 1;
+        }
+        else
+        {
+            k = 0;
+        }
+        for(i=k;i<len-2;i++)
+        {
+            if(!(buffer[i]>='0' && buffer[i]<='9') && buffer[i]!='.')
+            {
+                cout<<"stat1";stat = 0;
+            }
+            if(buffer[i] == '.')
+            {
+                dot++;
+            }
+            if(dot > 1)
+            {
+                cout<<"stat2";stat = 0;
+            }
+        }
+        if(stat)
+        {
+            cout << "Valid float " << buffer << endl;
+        }
+        else
+        {
+            cout << "Invalid float " << buffer << endl;
+        }
+    }
+    else if(buffer.find("E") != -1 || buffer.find("e") != -1)
+    {
+        //cout << "IF4" << endl;
+        int i, k,stat = 1, len = buffer.length(), dot = 0;
+        if(buffer[0] == '+' || buffer[0] == '-')
+        {
+            i = 1;
+        }
+        else
+        {
+            i = 0;
+        }
+        while(buffer[i]!='E' && buffer[i]!='e') // TODO
+        {
+            if(!(buffer[i]>='0' && buffer[i]<='9') && buffer[i]!='.')
+            {
+                stat = 0;
+                //cout << "stat1";
+            }
+            if(buffer[i] == '.')
+            {
+                dot++;
+            }
+            if(dot > 1)
+            {
+                stat = 0;
+            }
+            i++;
+        }
+        i++;
+        if(buffer[i] == '+' || buffer[i] == '-')
+        {
+            i += 1;
+            k = i;
+        }
+        for(i=k;i<len;i++)
+        {
+            if(!(buffer[i]>='0' && buffer[i]<='9') && buffer[i]=='.')
+            {
+                stat = 0;
+            }
+        }
+        if(stat)
+        {
+            cout << "Valid float " << buffer << endl;
+        }
+        else
+        {
+            cout << "Invalid float " << buffer << endl;
+        }
+    }
+    else
+    {
+        //cout << "IF5" << endl;
+        int i, k,stat = 1, len = buffer.length(), dot = 0;
+        if(buffer[0] == '+' || buffer[0] == '-')
+        {
+            k = 1;
+        }
+        else
+        {
+            k = 0;
+        }
+        for(i=k;i<len;i++)
+        {
+            if(!(buffer[i]>='0' && buffer[i]<='9') && buffer[i]!='.')
+            {
+                stat = 0;
+            }
+            if(buffer[i] == '.')
+            {
+                dot++;
+            }
+            if(dot > 1)
+            {
+                stat = 0;
+            }
+        }
+        if(stat)
+        {
+            cout << "Valid float " << buffer << endl;
+        }
+        else
+        {
+            cout << "Invalid float " << buffer << endl;
+        }
+    }
+}
+
+void validateInt(string buffer)
+{
+    int i, k,stat = 1, len = buffer.length();
+    if(buffer[0] == '+' || buffer[0] == '-')
+    {
+        k = 1;
+    }
+    else
+    {
+        k = 0;
+    }
+    for(i = k; i < len; i++)
+    {
+        if(!(buffer[i]>='0' && buffer[i]<='9'))
+        {
+            stat = 0;
+            break;
+        }
+    }
+    if(stat)
+    {
+        cout << "Valid int " << buffer << endl;
+    }
+    else
+    {
+        cout << "Invalid int " << buffer << endl;
+    }
 }
