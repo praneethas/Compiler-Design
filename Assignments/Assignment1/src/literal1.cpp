@@ -72,31 +72,25 @@ return: int
 int main()
 {
     fstream ifp, ofp;
-    char outputFilename[] = "literal.txt" ;
-	char cSourceFile[] = "test.c";
+    char outputFilename[] = "literal.txt" ; // Not Used
+	char cSourceFile[] = "test.c";          // Input File for the code
 	string keyWords[] = {"int","char","while","for","float","long",
-        "double","long long int","int*","int *","FILE*","FILE *"};
-	char *buffer;
+        "double","long long int","int*","int *","FILE*","FILE *"}; // Not Used
+	char *buffer;       // Stores each of line of code for processing
 	char ch;
 	ifp.open(cSourceFile, ios::in);
-	if (!ifp.is_open()) {
+	if (!ifp.is_open()) { // File Check
 	  cerr << "Can't open input file " << cSourceFile << endl;
 	  exit(1);
 	}
 	ofp.open(outputFilename, ios::out);
 	int count = 1;
-	if (!ofp.is_open()) {
+	if (!ofp.is_open()) { // File Check
 	  cerr << "Can't open output file " << outputFilename << endl;
 	  exit(1);
 	}
-	/*while((ch=getc(ifp))!=EOF)
-    {
-        fscanf(ifp, "%[^\n]s", buffer);
-        //fgets(buffer, sizeof(buffer), ifp);
-        printf("String = %s\n", buffer);
-    }*/
     char c;
-    while((c=ifp.get())!=EOF)
+    while((c=ifp.get())!=EOF) // While file has not reached its end
     {
         int i = 0;
         if(c == '\n')
@@ -105,7 +99,7 @@ int main()
         }
         buffer = (char*)malloc(1000);
         buffer[i++] = c;
-        while((c=ifp.get()) !='\n')
+        while((c=ifp.get()) !='\n')        // While file has not reached enf of line
         {
             if(c == '\t')
             {
@@ -113,49 +107,38 @@ int main()
             }
             buffer[i++]=c;
         }
-        buffer[i]='\0';
-        //printf("Buffer = %s\n",buffer);
+        buffer[i]='\0';                    // Store line in buffer
         int len = strlen(buffer);
-        //printf("New String = %s\n", trimSpaces(buffer));
         char array[len+2];
-        strcpy(array, trimSpaces(buffer));
-        //printf("Array = %s\n",array);
-        //stringTokenize(array);
-        checkLiterals(array);
-        free(buffer);
+        strcpy(array, trimSpaces(buffer)); // Trim trailing whitespaces
+        checkLiterals(array);              // Check for literals in the stored line
+        free(buffer);                      // Free memory after usage
     }
-    ifp.close();
+    ifp.close();                           // Close file after use
     return 0;
 }
 
-void stringTokenize(char array[])
-{
+void stringTokenize(char array[])         // Might be used for tokenizing string based on delimiters
+{                                         // Not used in this code
     int len = strlen(array);
-    //printf("Length of String = %d\n", len);
     if(strstr(array, "#define") != NULL) {
         char *tokens;
         int i=1;
         tokens = strtok (array," ");
-        //printf("Tokens:  ");
         while (tokens != NULL)
         {
-          //printf ("%d:%s  ",i++,tokens);
           tokens = strtok (NULL, " ");
         }
-        //printf("\n");
     }
     else
     {
         char *tokens;
         int i=1;
         tokens = strtok (array,"\"");
-        //printf("Tokens1:  ");
         while (tokens != NULL)
         {
-          //printf ("%d:%s  ",i++,tokens);
           tokens = strtok (NULL, "\"");
         }
-        //printf("\n");
     }
 }
 
@@ -163,19 +146,15 @@ void checkLiterals(char array[])
 {
 	int len = strlen(array), i;
 	string buffer = "";
-	//printf("Length of String is %d: %s\n", len, array);
 	for(i = 0; i < len; i++)
 	{
-		//printf("Array = %c\n", array[i]);
 		int statps = 0;
 		if((strstr (array,"printf") != NULL) || (strstr (array,"scanf") != NULL))
 		{
-			//cout << "condition 1" << endl;
 			statps = 1;
 		}
 		if(array[i]>='0' && array[i]<='9' )
 		{
-			//cout << "condition 2" << endl;
 			if(array[i-1] == '+' || array[i-1] == '-')
             {
                 buffer+=array[i-1];
@@ -188,44 +167,34 @@ void checkLiterals(char array[])
 			     array[i] != '^' && array[i] != '%')&& (i < len))
 			{
 				buffer+=array[i];
-				//printf("%c", array[i]);
 				i++;
 			}
-			//cout << "Buffer1 = "<< buffer << endl;
 			valiDateLiteral(buffer);
 			buffer = "";
-			//printf("\n");
 		}
 		if(array[i] == '\"' && statps != 1)
 		{
-			//cout << "condition 3" << endl;
 			buffer+=array[i];
-			//printf("%c", array[i]);
 			i++;
 			while(array[i] != '\"')
 			{
 				if(array[i] == '\\' && array[i+1] == '\"')
 				{
-					//printf("%c%c",array[i],array[i+1]);
 					buffer+=array[i];buffer+=array[i+1];
 					i += 2;
 				}
 				else
 				{
-					//printf("%c", array[i]);
 					buffer+=array[i];
 					i++;
 				}
 			}
 			buffer+=array[i];
-			//printf("%c\n", array[i]);
-			//cout << "Buffer2 = " << buffer << endl;
 			valiDateLiteral(buffer);
 			buffer="";
 		}
 		if(array[i] == '\"' && statps == 1)
 		{
-			//cout << "condition 4" << endl;
 			while(array[i] != '\"')
 			{
 				if(array[i] == '\\' && array[i+1] == '\"')
@@ -240,37 +209,30 @@ void checkLiterals(char array[])
 		}
 		if(array[i] == '\'')
 		{
-			//cout << "condition 5" << endl;
 			if(array[i+1] == '\'')
             {
                 buffer+=array[i];buffer+=array[i+1];
                 i += 2;
-                //cout << "Buffer3 = " << buffer << endl;
                 valiDateLiteral(buffer);
                 buffer="";
             }
 			else
             {
                 buffer+=array[i];buffer+=array[i+1];buffer+=array[i+2];
-                //printf("%c%c%c\n",array[i],array[i+1],array[i+2]);
                 i += 3;
-                //cout << "Buffer3 = " << buffer << endl;
                 valiDateLiteral(buffer);
                 buffer="";
 		    }
 		}
 		if(array[i] == '[')
 		{
-			//cout << "condition 6" << endl;
 			i++;
 			if(array[i] == ']')
 			{}
 			else
 			{
 				buffer+=array[i];
-				//printf("%c\n",array[i]);
 				i++;
-				//cout << "Buffer4 = " << buffer << endl;
 				valiDateLiteral(buffer);
 				buffer="";
 			}
@@ -283,32 +245,26 @@ void valiDateLiteral(string buffer)
 	int i = 0;
 	if(buffer[i] == '0' && (buffer[i+1] != 'x' && buffer[i+1] != 'X') && buffer.length() > 1)
 	{
-		//cout << "oct" << endl;
 		validateOctal(buffer);
 	}
 	else if(buffer[i] == '0' && (buffer[i+1] == 'x' || buffer[i+1] == 'X') && buffer.length() > 2)
 	{
-		//cout << "hex" << endl;
 		validateHex(buffer);
 	}
 	else if(buffer.find("\"") != -1)
 	{
-		//cout << "string" << endl;
 		validateString(buffer);
 	}
 	else if(buffer.find("\'") != -1)
     {
-        //cout << "char" << endl;
         validateChar(buffer);
     }
     else if(buffer.find(".") != -1)
     {
-        //cout << "float" << endl;
         validateFloat(buffer);
     }
     else
     {
-        //cout << "int" << endl;
         validateInt(buffer);
     }
 }
