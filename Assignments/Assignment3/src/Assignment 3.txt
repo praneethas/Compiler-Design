@@ -1,0 +1,3 @@
+Write a program which shall provide an implementation of operator precedence parser.
+Read an operator grammar and precedence table from input file/files.
+Read a sentence and show the steps by step parsing of that given sentence.
