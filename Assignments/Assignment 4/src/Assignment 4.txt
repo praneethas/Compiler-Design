@@ -1,0 +1,2 @@
+Write a program which shall read a LL(1) Grammar from an input file and construct LL(1) parsing table for the given grammar. Also read a sentence
+and show the steps of parsing for the same. Check the validity of LL(1) Grammar.
