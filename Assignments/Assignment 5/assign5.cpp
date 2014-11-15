@@ -34,14 +34,15 @@ vector< vector<string> > prodFirst;
 vector< vector<string> > grammarTable;
 vector< vector<string> > firstCheck;
 vector< vector<string> > SLRTable;
+vector< vector<string> > connections; // To know how items are connected
+vector<string> connectionsHelper;
 vector<string> conflictsTable;
 string startSymbol;
 string FirstCheck = "";
 int sizeTerm;
-int isLL1Grammar=1;
 char input[] = "grammar.txt";
 string newStart;
-string inputText = "yxxy$"; //i,i,i;f //(a+a) //i=i //i+i*i //aaba
+string inputText = "i+i*i$"; //i,i,i;f //(a+a) //i=i //i+i*i //aaba //yxxy
 string closureCheck;
 
 
@@ -51,13 +52,6 @@ void printVecTwoD(vector< vector<string> > v)
     for(int i=0;i<h;i++)
     {
         int l=v[i].size();
-        /*cout << " ";
-        for(int r=0;r<l;r++)
-        {
-            cout << r << " ";
-        }
-        cout << endl;
-        cout << i;*/
         for(int j=0;j<l;j++)
         {
             cout << v[i][j] << "\t";
@@ -237,19 +231,14 @@ int isTerminal(string s)
 vector<string> findFirstString(string s, int l, int start)
 {
     int m=two_d[l].size();
-    //cout << "Size of " << two_d[l][0] << " " << m << " " << start << endl;
     vector<string> dummyVec;
     vector<string> dummyVec1;
     if (FirstCheck.find(s) == string::npos) {
-        //cout << "Could not find " << s << endl;
         FirstCheck+=s;
-        //cout << "First has not been found for " << s << endl;
     }
     else
     {
-        //cout << "First has been found for " << s << endl;
         int r = findInVector(non_terminals, s);
-        //cout << "First of " << First[r][0] << ": ";
         for(int z = 1;z < First[r].size();z++)
         {
             cout << First[r][z] << " ";
@@ -258,67 +247,40 @@ vector<string> findFirstString(string s, int l, int start)
         cout << endl;
         return dummyVec;
     }
-    //cout << "FirstCheck: " << FirstCheck << endl;
     for(int j=start;j<m;j++)
     {
         string h=two_d.at(l).at(j);
         int k = h.length();
-        //cout << "Production: " << j << " " << h << " has length " << k << endl;
         for(int i=0;i<k;i++)
         {
             string t = h.substr(i,i+1);
-            //cout << t << endl;
             if(isTerminal(t) == 1)
             {
-                //cout << t << " is a terminal" << endl;
-                //cout << t << " is the First of " << s << endl;
                 dummyVec.push_back(t);
                 break ;
             }
-            /*for(int j=start;j<m;j++)
-            {
-                string h=two_d.at(l).at(j);
-                int k = h.length();
-                //cout << "Production: " << j << " " << h << " has length " << k << endl;
-                for(int i=0;i<k;i++)
-                {
-                    string t = h.substr(i,i+1);
-                    if(isTerminal(t) == 1)
-                    {
-                        dummyVec.push_back(t);
-                        break ;
-                    }*/
-                    if(isTerminal(t) == 0)
-                    {
-                        int r = findInVector(non_terminals, t);
-                        if (FirstCheck.find(t) == string::npos) {
-                            //cout << t << " is " << r << " in non-terminals" << endl;
-                            //cout << "Starting with " << t << " from Production: " << 1 << endl;
-                           //cout << "First of " << s << " contains " << " First of " << t << endl;
-                            //cout << "Finding First of " << t << endl;
-                            dummyVec1 = findFirstString(t, r, 1);
-                            for (int z = 0; z < dummyVec1.size(); ++z)
-                            {
-                                dummyVec.push_back(dummyVec1[z]);
-                            }
-                        }
-                        else {
-                            //cout << "Starting1 with " << t << " from Production: " << j+1 << endl;
-                            //cout << "First of " << s << " contains " << " First of " << t << endl;
-                            //cout << "Finding First of " << t << endl;
-                            dummyVec1 = findFirstString(t, r, j+1);
-                            for (int z = 0; z < dummyVec1.size(); ++z)
-                            {
-                                dummyVec.push_back(dummyVec1[z]);
-                            }
-                        }
-                    }
-                    if(findInVector(dummyVec, "^") == -1)
-                    {
-                        break;
-                    }
-              /*  }
-            }*/
+			if(isTerminal(t) == 0)
+			{
+				int r = findInVector(non_terminals, t);
+				if (FirstCheck.find(t) == string::npos) {
+					dummyVec1 = findFirstString(t, r, 1);
+					for (int z = 0; z < dummyVec1.size(); ++z)
+					{
+						dummyVec.push_back(dummyVec1[z]);
+					}
+				}
+				else {
+					dummyVec1 = findFirstString(t, r, j+1);
+					for (int z = 0; z < dummyVec1.size(); ++z)
+					{
+						dummyVec.push_back(dummyVec1[z]);
+					}
+				}
+			}
+			if(findInVector(dummyVec, "^") == -1)
+			{
+				break;
+			}
         }
     }
     sort( dummyVec.begin(), dummyVec.end() );
@@ -333,12 +295,6 @@ vector<string> findFirstString(string s, int l, int start)
         }
     }
     int FirstL = First[l].size();
-    /*cout << "First of " << First[l][0] << ": ";
-    for(int z = 1;z < FirstL;z++)
-    {
-        cout << First[l][z] << " " ;
-    }
-    cout << endl;*/
     return dummyVec;
 }
 
@@ -435,12 +391,9 @@ void makeFirst()
     for(int i=0;i<k;i++)
     {
         first = First[i][0];
-        //cout << "Finding first for " << first << endl;
         if(firstMake[first] != 1)
         {
-            //cout << "Finding first " << first << endl;
             firstPush = findFirstString(first, i, 1);
-            //cout << "Found first for " << first << endl;
         }
     }
     for(int i=0;i<k;i++)
@@ -577,7 +530,6 @@ vector<string> findItem(vector<string> input, string S)
                     int closureLen = minItemSet[closure].size();
                     for (int j = 1; j < closureLen; ++j)
                     {
-                        //cout << "Pushing " << minItemSet[closure][j] << endl;
                         ItemSet2.push_back(minItemSet[closure][j]);
                     }
                     printVecOneD(ItemSet2);
@@ -609,8 +561,6 @@ void makeItemSet()
     int lengthTable = SLRTable[0].size();
     for (int i = 0; i < ItemSet.size(); ++i)
     {
-        //cout << "Present Item Set has " << ItemSet.size() << " items" << endl;
-        //dummy.push_back(string(1,i+'0'));
         dummy.push_back(to_string(i));
         for (int z = 1; z < lengthTable; ++z)
         {
@@ -633,10 +583,8 @@ void makeItemSet()
                 if(first!=closureToFind.length()-1)
                 {
                     visitLen[j]=1;
-                    //cout << "Calculating Item " << item+1 << endl;
                     string closureFind = string(1,closureToFind[first+1]);
                     itemFind.push_back(closureToFind);
-                    //cout << "Visited ItemString1 " << j << " in Item " << i << endl;
                     for (int k = j+1; k < len; ++k)
                     {
                         closureToFind = ItemSet[i][k];
@@ -645,14 +593,9 @@ void makeItemSet()
                         if(closureFind.compare(closureFind1)==0)
                         {
                             itemFind.push_back(closureToFind);
-                            //cout << "Visited ItemString2 " << k << " in Item " << i << endl;
                             visitLen[k]=1;
                         }
                     }
-                    /*cout << "Taking closure of ";
-                    printVecOneD(itemFind);
-                    cout << " wrt " << closureFind << endl;*/
-                    //cout << "Making Item " << item+1 << " from Item " << i << " using " << closureFind << endl;
                     cout << endl;
                     closureCheck="";
                     dumItemSet = findItem(itemFind, closureFind);
@@ -660,6 +603,11 @@ void makeItemSet()
                     if(compare==-1 || compare==-2)
                     {
                         cout << "Item " << i << " -> " << closureFind << " Item " << item+1 << endl; 
+                        connectionsHelper.push_back(to_string(item+1));
+                        connectionsHelper.push_back(to_string(i));
+						connectionsHelper.push_back(closureFind);
+						connections.push_back(connectionsHelper);
+                        connectionsHelper.clear();
                         printVecOneD(itemFind); 
                         cout << "Item " << item+1 << ": ";
                         printVecOneD(dumItemSet);
@@ -670,10 +618,7 @@ void makeItemSet()
                         {
                             term = findInVector(non_terminals,closureFind);
                             cout << "Contains a GOTO Step" << endl;
-                            //printVecOneD(SLRTable[0]);
-                            //cout << closureFind << endl;
                             find = findInVector(SLRTable[0],closureFind);
-                            //cout << find << i << closureFind << item << endl;
                             SLRTable[i+1][find] = to_string(item);
                         }
                         else
@@ -695,7 +640,12 @@ void makeItemSet()
                     else
                     {
                         cout << "Item " << i << " -> " << closureFind << " Item " << compare << endl; 
-                        term = findInVector(terminals,closureFind);
+                        connectionsHelper.push_back(to_string(compare));
+                        connectionsHelper.push_back(to_string(i));
+						connectionsHelper.push_back(closureFind);
+						connections.push_back(connectionsHelper);
+						connectionsHelper.clear();
+						term = findInVector(terminals,closureFind);
                         if(term==-1)
                         {
                             term = findInVector(non_terminals,closureFind);
@@ -764,15 +714,6 @@ void makeItemSet()
                 }
             }
         }
-        /*cout << "Visit Array begin" << endl;
-        for (int l = 0; l < len; ++l)
-        {
-            cout << visitLen[l] << " ";
-        }
-        cout << "Visit Array end" << endl;
-        cout << endl;*/
-        /*cout << "ItemSet" << endl;
-        printVecTwoD(ItemSet);*/
         closureCheck="";
     }
 }
@@ -792,7 +733,6 @@ void runString(string s)
     while(1)
     {
         cout << step << "\t\t\t";
-        //cout << "Present State " << pstate << endl;
         step++;
         string top=string(1,s[slen]);
         int find=findInVector(SLRTable[0],top);
@@ -802,7 +742,6 @@ void runString(string s)
             return ;
         }
         action = SLRTable[pstate+1][find];
-        //cout << action << endl;
         if(action.compare("")==0)
         {
             cout << "Error has occured. Please check your string." << endl; 
@@ -816,8 +755,6 @@ void runString(string s)
         if(action[0]=='S')
         {
             cout << grammars << "\t\t\t\t" << s.substr(slen,len) << "\t\t" << "Shift " << action.substr(1,action.length()) << endl;
-            //grammars.push_back(s[slen]);
-            //grammars.push_back(action.substr(1,action.length()));
             grammars+=s[slen]+action.substr(1,action.length());
             grammar.push(string(1,s[slen]));
             grammar.push(action.substr(1,action.length()));
@@ -838,7 +775,6 @@ void runString(string s)
             {
                 if(prodlen%2!=0)
                 {
-                    //cout << "Removing " << grammar.top() << endl;
                     grammars.pop_back();
                     c = grammar.top().c_str();
                     pstate = atoi(c);
@@ -847,19 +783,16 @@ void runString(string s)
                 {
                     string num = to_string(pstate);
                     intLen = num.length();
-                    //cout << "Removing1 " << pstate << " " << intLen << endl;
                     while(intLen--)
                     {
                         grammars.pop_back();
                     }
                 }
                 grammar.pop();
-                //cout << grammars << endl;
                 prodlen--;
             }
             c = grammar.top().c_str();
             pstate = atoi(c);
-            //cout << pstate << endl;
             grammar.push(string(1,production[0]));
             grammars.push_back(production[0]);
             find = findInVector(SLRTable[0],string(1,production[0]));
@@ -904,7 +837,8 @@ void makeAugmentedGrammar()
 
 void module1()
 {
-    cout << "Reading Grammar" << endl;
+	freopen("output.txt","w",stdout);
+	cout << "Reading Grammar" << endl;
 
     readGrammar();
     cout << "Grammar" << endl;
@@ -946,6 +880,18 @@ void module1()
     {
         cout << "Item " << i << " -> ";
         printVecOneD(ItemSet[i]);
+        if(i!=0)
+        {
+        	cout << "Connections of Item " << i << ": ";
+        	int connectionsSize = connections.size();
+        	for (int t = 0; t < connectionsSize; ++t) {
+				if(atoi(connections[t][0].c_str())==i)
+				{
+					cout << "(" << connections[t][1] << ", " << connections[t][2] << ")  ";
+				}
+			}
+            cout << endl;
+        }
     }
 
     cout << endl;
@@ -971,7 +917,8 @@ void module1()
 
 void module2()
 {
-    readGrammar();
+	freopen("output.txt","w",stdout);
+	readGrammar();
     makeTerminalsList();
     makeFirst();
     makeFollow();
@@ -996,7 +943,8 @@ void module2()
 
 void module3()
 {
-    vector< vector<string> > dummyItemSet;
+	freopen("output.txt","w",stdout);
+	vector< vector<string> > dummyItemSet;
     string compareItemSetString[] = {"R:L."};
     
     string ItemSetString1[] = {"S':.S","S:.L=R","S:.R","L:.*R","L:.i","R:.L"};
@@ -1038,7 +986,8 @@ void module3()
 
 void module4()
 {
-    vector<string> itemFind;
+	freopen("output.txt","w",stdout);
+	vector<string> itemFind;
     vector< vector<string> > ItemSetTest;
     //string ItemTestSet[] = {"S:L=.R","R:.L","L:.*R","L:.i"};
     string ItemTestSet[] = {"E:E+.T","T:.T*F","T:.F","F:.(E)","F:.i"};
@@ -1097,7 +1046,6 @@ int main()
     printVecTwoD(minItemSet);*/
     cout << "Module 1" << endl;
     module1();
-    freopen("output.txt","w",stdout);
     /*readGrammar();
     makeAugmentedGrammar();
     printVecOneD(aug_grammar);*/
